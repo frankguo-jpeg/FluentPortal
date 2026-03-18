@@ -33,7 +33,7 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center -m-8 p-8" style={{ background: "linear-gradient(135deg, #1a2332 0%, #243447 40%, #2d4a6a 100%)" }}>
+    <div className="fixed inset-0 flex items-center justify-center p-8" style={{ background: "linear-gradient(135deg, #1a2332 0%, #243447 40%, #2d4a6a 100%)" }}>
       {/* Decorative elements */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute -top-40 -right-40 w-96 h-96 rounded-full blur-3xl" style={{ background: "rgba(74, 144, 217, 0.08)" }} />
