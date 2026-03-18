@@ -26,7 +26,7 @@ export default async function LeaderboardPage() {
   const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 
   return (
-    <div className="animate-fade-in max-w-4xl">
+    <div className="animate-fade-in">
       <div className="mb-6">
         <h1 className="page-title">Leaderboard</h1>
         <p className="page-subtitle">{monthNames[month - 1]} {year}</p>

@@ -18,7 +18,7 @@ export default async function UpdatesPage() {
   });
 
   return (
-    <div className="animate-fade-in max-w-4xl">
+    <div className="animate-fade-in">
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="page-title">Weekly Updates</h1>

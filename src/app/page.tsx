@@ -54,7 +54,7 @@ export default async function DashboardPage() {
   const thisWeekUpdates = await prisma.weeklyUpdate.count({ where: { weekNumber, year } });
 
   return (
-    <div className="space-y-8 animate-fade-in max-w-5xl">
+    <div className="space-y-8 animate-fade-in">
       {/* Header */}
       <div>
         <h1 className="page-title">Dashboard</h1>

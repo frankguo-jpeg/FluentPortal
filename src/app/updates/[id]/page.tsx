@@ -5,6 +5,7 @@ import { METRIC_TEMPLATES } from "@/lib/metrics";
 import { formatWeekLabel } from "@/lib/utils";
 import { ReactionBar } from "@/components/reaction-bar";
 import { CommentSection } from "@/components/comment-section";
+import { UpdateActions } from "@/components/update-actions";
 import Link from "next/link";
 
 export default async function UpdateDetailPage({ params }: { params: { id: string } }) {
@@ -21,6 +22,7 @@ export default async function UpdateDetailPage({ params }: { params: { id: strin
   if (!update) notFound();
 
   const metrics = JSON.parse(update.metrics);
+  const canManage = session.user.role === "COMPANY_ADMIN" && session.user.companyId === update.companyId;
 
   return (
     <div className="max-w-3xl animate-fade-in">
@@ -32,14 +34,17 @@ export default async function UpdateDetailPage({ params }: { params: { id: strin
       </Link>
 
       <div className="mb-6">
-        <div className="flex items-center gap-3 mb-1">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-100 to-blue-50 flex items-center justify-center text-blue-700 font-bold text-sm">
-            {update.company.name.charAt(0)}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3 mb-1">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-100 to-blue-50 flex items-center justify-center text-blue-700 font-bold text-sm">
+              {update.company.name.charAt(0)}
+            </div>
+            <div>
+              <h1 className="page-title">{update.company.name}</h1>
+              <p className="text-sm text-slate-400">{formatWeekLabel(update.weekNumber, update.year)}</p>
+            </div>
           </div>
-          <div>
-            <h1 className="page-title">{update.company.name}</h1>
-            <p className="text-sm text-slate-400">{formatWeekLabel(update.weekNumber, update.year)}</p>
-          </div>
+          {canManage && <UpdateActions updateId={update.id} />}
         </div>
       </div>
 
