@@ -43,7 +43,7 @@ export default async function CompaniesPage() {
   return (
     <div className="animate-fade-in">
       <h1 className="page-title">Companies</h1>
-      <p className="page-subtitle mb-6">All Valsoft portfolio companies</p>
+      <p className="page-subtitle mb-6">All Fluent portfolio companies</p>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {companies.map((company, i) => {

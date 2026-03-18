@@ -59,7 +59,7 @@ export function Sidebar() {
           </div>
           <div>
             <h1 className="text-base font-bold text-white tracking-tight">FluentPortal</h1>
-            <p className="text-[11px] font-medium" style={{ color: "rgba(148, 177, 215, 0.6)" }}>Valsoft Progress Tracker</p>
+            <p className="text-[11px] font-medium" style={{ color: "rgba(148, 177, 215, 0.6)" }}>Fluent Progress Tracker</p>
           </div>
         </div>
       </div>

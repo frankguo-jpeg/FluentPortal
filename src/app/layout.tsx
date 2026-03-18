@@ -11,8 +11,8 @@ const geistSans = localFont({
 });
 
 export const metadata: Metadata = {
-  title: "FluentPortal - Valsoft Progress Tracker",
-  description: "Track progress and insights across Valsoft portfolio companies",
+  title: "FluentPortal - Fluent Progress Tracker",
+  description: "Track progress and insights across Fluent portfolio companies",
 };
 
 export default function RootLayout({
