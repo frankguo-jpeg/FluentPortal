@@ -71,7 +71,7 @@ async function main() {
     create: {
       email: "manager@valsoft.com",
       passwordHash,
-      name: "Valsoft Manager",
+      name: "Fluent Manager",
       role: "MANAGER",
     },
   });
