@@ -1,0 +1,103 @@
+"use client";
+
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { cn } from "@/lib/utils";
+import { NavUser } from "./nav-user";
+
+const navItems = [
+  {
+    href: "/",
+    label: "Dashboard",
+    icon: (
+      <svg className="w-[18px] h-[18px]" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6A2.25 2.25 0 0 1 6 3.75h2.25A2.25 2.25 0 0 1 10.5 6v2.25a2.25 2.25 0 0 1-2.25 2.25H6a2.25 2.25 0 0 1-2.25-2.25V6ZM3.75 15.75A2.25 2.25 0 0 1 6 13.5h2.25a2.25 2.25 0 0 1 2.25 2.25V18a2.25 2.25 0 0 1-2.25 2.25H6A2.25 2.25 0 0 1 3.75 18v-2.25ZM13.5 6a2.25 2.25 0 0 1 2.25-2.25H18A2.25 2.25 0 0 1 20.25 6v2.25A2.25 2.25 0 0 1 18 10.5h-2.25a2.25 2.25 0 0 1-2.25-2.25V6ZM13.5 15.75a2.25 2.25 0 0 1 2.25-2.25H18a2.25 2.25 0 0 1 2.25 2.25V18A2.25 2.25 0 0 1 18 20.25h-2.25a2.25 2.25 0 0 1-2.25-2.25v-2.25Z" />
+      </svg>
+    ),
+  },
+  {
+    href: "/updates",
+    label: "Updates",
+    icon: (
+      <svg className="w-[18px] h-[18px]" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M12 7.5h1.5m-1.5 3h1.5m-7.5 3h7.5m-7.5 3h7.5m3-9h3.375c.621 0 1.125.504 1.125 1.125V18a2.25 2.25 0 0 1-2.25 2.25M16.5 7.5V4.875c0-.621-.504-1.125-1.125-1.125H4.125C3.504 3.75 3 4.254 3 4.875V18a2.25 2.25 0 0 0 2.25 2.25h13.5M6 7.5h3v3H6v-3Z" />
+      </svg>
+    ),
+  },
+  {
+    href: "/companies",
+    label: "Companies",
+    icon: (
+      <svg className="w-[18px] h-[18px]" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 21h19.5m-18-18v18m10.5-18v18m6-13.5V21M6.75 6.75h.75m-.75 3h.75m-.75 3h.75m3-6h.75m-.75 3h.75m-.75 3h.75M6.75 21v-3.375c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21M3 3h12m-.75 4.5H21m-3.75 0h.008v.008h-.008v-.008Zm0 3h.008v.008h-.008v-.008Zm0 3h.008v.008h-.008v-.008Z" />
+      </svg>
+    ),
+  },
+  {
+    href: "/leaderboard",
+    label: "Leaderboard",
+    icon: (
+      <svg className="w-[18px] h-[18px]" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 18.75h-9m9 0a3 3 0 0 1 3 3h-15a3 3 0 0 1 3-3m9 0v-3.375c0-.621-.503-1.125-1.125-1.125h-.871M7.5 18.75v-3.375c0-.621.504-1.125 1.125-1.125h.872m5.007 0H9.497m5.007 0a7.454 7.454 0 0 1-.982-3.172M9.497 14.25a7.454 7.454 0 0 0 .981-3.172M5.25 4.236c-.982.143-1.954.317-2.916.52A6.003 6.003 0 0 0 7.73 9.728M5.25 4.236V4.5c0 2.108.966 3.99 2.48 5.228M5.25 4.236V2.721C7.456 2.41 9.71 2.25 12 2.25c2.291 0 4.545.16 6.75.47v1.516M18.75 4.236c.982.143 1.954.317 2.916.52A6.003 6.003 0 0 1 16.27 9.728M18.75 4.236V4.5c0 2.108-.966 3.99-2.48 5.228m0 0a6.02 6.02 0 0 1-2.77.702 6.02 6.02 0 0 1-2.77-.702" />
+      </svg>
+    ),
+  },
+];
+
+export function Sidebar() {
+  const pathname = usePathname();
+
+  return (
+    <aside className="w-[260px] min-h-screen flex flex-col" style={{ background: "linear-gradient(180deg, #1a2332 0%, #243447 100%)" }}>
+      {/* Logo */}
+      <div className="px-6 py-6">
+        <div className="flex items-center gap-3">
+          <div className="w-9 h-9 rounded-lg flex items-center justify-center" style={{ background: "linear-gradient(135deg, #4a90d9 0%, #2d6cb5 100%)" }}>
+            <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z" />
+            </svg>
+          </div>
+          <div>
+            <h1 className="text-base font-bold text-white tracking-tight">FluentPortal</h1>
+            <p className="text-[11px] font-medium" style={{ color: "rgba(148, 177, 215, 0.6)" }}>Valsoft Progress Tracker</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Navigation */}
+      <nav className="flex-1 px-3 mt-2 space-y-0.5">
+        <p className="text-[10px] uppercase tracking-[0.15em] font-semibold px-3 mb-3" style={{ color: "rgba(148, 177, 215, 0.4)" }}>Menu</p>
+        {navItems.map((item) => {
+          const isActive = item.href === "/" ? pathname === "/" : pathname.startsWith(item.href);
+          return (
+            <Link
+              key={item.href}
+              href={item.href}
+              className={cn(
+                "flex items-center gap-3 px-3 py-2.5 rounded-lg text-[13px] font-medium transition-all duration-200",
+                isActive
+                  ? "text-white"
+                  : "hover:text-white"
+              )}
+              style={{
+                background: isActive ? "rgba(74, 144, 217, 0.15)" : "transparent",
+                color: isActive ? "white" : "rgba(148, 177, 215, 0.7)",
+              }}
+            >
+              <span style={{ color: isActive ? "#4a90d9" : "rgba(148, 177, 215, 0.5)" }}>{item.icon}</span>
+              {item.label}
+              {isActive && (
+                <span className="ml-auto w-1.5 h-1.5 rounded-full" style={{ background: "#4a90d9" }} />
+              )}
+            </Link>
+          );
+        })}
+      </nav>
+
+      {/* User */}
+      <div className="p-4" style={{ borderTop: "1px solid rgba(255,255,255,0.06)" }}>
+        <NavUser />
+      </div>
+    </aside>
+  );
+}

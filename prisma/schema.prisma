@@ -1,0 +1,103 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Company {
+  id        String   @id @default(cuid())
+  name      String
+  slug      String   @unique
+  logo      String?
+  createdAt DateTime @default(now())
+
+  users         User[]
+  weeklyUpdates WeeklyUpdate[]
+  monthlyScores MonthlyScore[]
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  name         String
+  role         String   @default("COMPANY_ADMIN")
+  companyId    String?
+  createdAt    DateTime @default(now())
+
+  company   Company?   @relation(fields: [companyId], references: [id])
+  comments  Comment[]
+  reactions Reaction[]
+}
+
+model WeeklyUpdate {
+  id          String   @id @default(cuid())
+  companyId   String
+  weekNumber  Int
+  year        Int
+  metrics     String
+  details     String
+  submittedAt DateTime @default(now())
+  createdAt   DateTime @default(now())
+
+  company   Company    @relation(fields: [companyId], references: [id])
+  comments  Comment[]
+  reactions Reaction[]
+
+  @@unique([companyId, weekNumber, year])
+}
+
+model Comment {
+  id        String   @id @default(cuid())
+  updateId  String
+  userId    String
+  content   String
+  createdAt DateTime @default(now())
+
+  update WeeklyUpdate @relation(fields: [updateId], references: [id])
+  user   User         @relation(fields: [userId], references: [id])
+}
+
+model Reaction {
+  id        String   @id @default(cuid())
+  updateId  String
+  userId    String
+  type      String
+  createdAt DateTime @default(now())
+
+  update WeeklyUpdate @relation(fields: [updateId], references: [id])
+  user   User         @relation(fields: [userId], references: [id])
+
+  @@unique([updateId, userId, type])
+}
+
+model AIRanking {
+  id              String   @id @default(cuid())
+  weekNumber      Int
+  year            Int
+  rankings        String
+  insightOfWeek   String
+  insightUpdateId String?
+  suggestions     String
+  generatedAt     DateTime @default(now())
+
+  @@unique([weekNumber, year])
+}
+
+model MonthlyScore {
+  id              String   @id @default(cuid())
+  companyId       String
+  month           Int
+  year            Int
+  aggregatedScore Float
+  rank            Int
+  createdAt       DateTime @default(now())
+
+  company Company @relation(fields: [companyId], references: [id])
+
+  @@unique([companyId, month, year])
+}
