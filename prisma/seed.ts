@@ -133,6 +133,72 @@ async function main() {
   }
 
   console.log(`  Created ${updateCount} sample weekly updates`);
+
+  // Create sample AI rankings for week 11
+  const rankingReasons = [
+    "Exceptional AI integration with measurable 65% automation rate in support. Strong adoption of RAG architecture shows forward-thinking approach.",
+    "Successful monolith-to-microservices migration with daily deployments. GitHub Copilot adoption driving measurable productivity gains.",
+    "Innovative natural language querying feature using Claude API. PostgreSQL migration shows good technical decision-making.",
+    "Strong DevOps maturity with 82% reduction in build times. Full TypeScript migration with 70% fewer runtime errors is impressive.",
+    "Excellent frontend modernization from jQuery to Next.js. AI chatbot handling 40% of pre-sales shows creative use of technology.",
+    "Real-time data pipeline with Kafka/Redis is a significant infrastructure upgrade. Sub-2-second dashboard updates are best-in-class.",
+    "Design system adoption cutting dev time by 50%. AWS Well-Architected Review shows commitment to operational excellence.",
+    "OpenTelemetry implementation drastically improving MTTR. AI-assisted onboarding with 73% improvement in activation rate is outstanding.",
+    "Semantic search with vector embeddings is cutting-edge. Infrastructure as Code adoption is a strong operational improvement.",
+    "Document processing with 97% accuracy is production-ready AI. Monorepo migration with Turborepo shows modern engineering practices.",
+    "Feature flag adoption enabling 3x feature velocity with zero rollbacks. Internal AI assistant reducing onboarding time is innovative.",
+    "GraphQL migration improving data fetching efficiency by 40%. Playwright adoption achieving 85% E2E coverage is excellent.",
+  ];
+
+  const suggestions: Record<string, string> = {};
+  const rankings: Array<{ companyId: string; companyName: string; rank: number; score: number; reasoning: string }> = [];
+
+  // Shuffle companies for ranking and assign scores
+  const shuffled = [...allCompanies].sort(() => Math.random() - 0.5);
+  shuffled.forEach((company, i) => {
+    const score = Math.max(45, 95 - i * 2 - Math.floor(Math.random() * 5));
+    rankings.push({
+      companyId: company.id,
+      companyName: company.name,
+      rank: i + 1,
+      score,
+      reasoning: rankingReasons[i % rankingReasons.length],
+    });
+    const suggestionPool = [
+      "Consider implementing automated regression testing to maintain quality as deployment frequency increases.",
+      "Explore edge computing solutions to reduce latency for your growing international customer base.",
+      "Invest in observability tooling (distributed tracing, structured logging) to support your microservices architecture.",
+      "Consider adopting a feature flag system to enable safer progressive rollouts of new AI features.",
+      "Look into implementing a data mesh architecture to better handle your growing real-time data needs.",
+      "Evaluate serverless computing for batch workloads to optimize cloud costs while maintaining scalability.",
+      "Consider building an internal developer platform to accelerate onboarding and reduce cognitive load.",
+      "Explore implementing chaos engineering practices to improve system resilience and incident preparedness.",
+    ];
+    suggestions[company.id] = suggestionPool[i % suggestionPool.length];
+  });
+
+  // Get a random update ID for the insight
+  const sampleUpdate = await prisma.weeklyUpdate.findFirst({ where: { weekNumber: 11, year: 2026 } });
+
+  await prisma.aIRanking.upsert({
+    where: { weekNumber_year: { weekNumber: 11, year: 2026 } },
+    update: {
+      rankings: JSON.stringify(rankings),
+      insightOfWeek: "This week's standout trend is the rapid adoption of AI-powered automation across the portfolio. Multiple companies reported significant efficiency gains from integrating Claude and other AI tools into their workflows — from customer support automation achieving 65% autonomous resolution rates, to AI-assisted onboarding flows improving activation by 73%. Companies that paired AI adoption with strong engineering foundations (TypeScript migration, CI/CD maturity, observability) saw the most compounding benefits.",
+      insightUpdateId: sampleUpdate?.id || null,
+      suggestions: JSON.stringify(suggestions),
+    },
+    create: {
+      weekNumber: 11,
+      year: 2026,
+      rankings: JSON.stringify(rankings),
+      insightOfWeek: "This week's standout trend is the rapid adoption of AI-powered automation across the portfolio. Multiple companies reported significant efficiency gains from integrating Claude and other AI tools into their workflows — from customer support automation achieving 65% autonomous resolution rates, to AI-assisted onboarding flows improving activation by 73%. Companies that paired AI adoption with strong engineering foundations (TypeScript migration, CI/CD maturity, observability) saw the most compounding benefits.",
+      insightUpdateId: sampleUpdate?.id || null,
+      suggestions: JSON.stringify(suggestions),
+    },
+  });
+
+  console.log("  Created AI rankings for week 11");
   console.log("Seeding complete!");
   console.log("\nDefault password for all accounts: password123");
 }
