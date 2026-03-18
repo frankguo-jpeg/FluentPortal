@@ -80,16 +80,18 @@ async function main() {
 
   // Create sample weekly updates for weeks 9-11 (past 3 weeks)
   const sampleDetails = [
-    "Shipped new onboarding flow which reduced time-to-value by 40%. Customer feedback has been overwhelmingly positive. Team is now focused on improving the reporting dashboard based on user requests.",
-    "Completed migration to new cloud infrastructure. Performance improved by 25% across all endpoints. Started planning Q2 feature roadmap with product team.",
-    "Launched beta of AI-powered search feature. Early metrics show 3x improvement in search relevance. Fixed 12 critical bugs reported by enterprise customers.",
-    "Rolled out new pricing tier targeting mid-market segment. Initial conversion rates are promising at 8%. Hired two senior engineers to accelerate development.",
-    "Integrated with three new payment providers expanding coverage to 15 countries. Customer churn decreased by 2% month-over-month. Team morale is high.",
-    "Released mobile app v2.0 with offline support. App store rating improved from 3.8 to 4.5. Working on enterprise SSO integration for Q2 launch.",
-    "Completed SOC 2 Type II audit successfully. No critical findings. This unblocks several enterprise deals in the pipeline worth $2M+ ARR.",
-    "Redesigned the analytics dashboard based on customer interviews. Beta users report 60% faster insight discovery. Preparing for general availability next week.",
-    "Automated deployment pipeline reducing release cycle from 2 weeks to 2 days. Zero downtime deployments now standard. Team velocity increased by 30%.",
-    "Closed largest deal in company history — $500K ARR enterprise contract. Customer success team expanded to handle growing account base. NPS score at 72.",
+    "Integrated Claude AI into our customer support pipeline — ticket resolution time dropped from 4 hours to 22 minutes. The AI handles 65% of L1 tickets autonomously now. Engineering team is building a Retrieval-Augmented Generation (RAG) system on top of our knowledge base to improve accuracy further.",
+    "Migrated our legacy monolith to a microservices architecture using Kubernetes and Terraform. Deployment frequency went from monthly to daily. Adopted GitHub Copilot across the dev team which has boosted PR throughput by 35%. Currently evaluating Anthropic's API for automated code review.",
+    "Launched an AI-powered predictive analytics module using Claude for natural language querying of dashboards. Customers can now ask questions in plain English instead of writing SQL. Early adopters report 3x faster insight discovery. Also migrated our database from MySQL to PostgreSQL for better JSON support.",
+    "Implemented a CI/CD pipeline with automated testing using Docker and GitHub Actions. Build times reduced from 45 minutes to 8 minutes. Adopted TypeScript across the entire codebase — runtime errors in production dropped by 70%. Exploring vector databases (Pinecone) for semantic search.",
+    "Deployed a new React frontend with Next.js replacing our legacy jQuery UI. Page load times improved from 6s to 800ms. Integrated Stripe Connect for marketplace payments. The AI chatbot we built using Claude handles 40% of pre-sales questions, freeing up the sales team significantly.",
+    "Built a real-time data pipeline using Apache Kafka and Redis for event streaming. Customer-facing dashboards now update in under 2 seconds vs 30-minute batch jobs before. Started using Vercel for frontend deployments — zero-downtime releases are now the norm.",
+    "Adopted Tailwind CSS and a design system approach which cut UI development time by 50%. Implemented end-to-end encryption for all customer data using modern cryptographic libraries. Completed AWS Well-Architected Review — migrated 3 workloads to serverless Lambda functions saving $12K/month.",
+    "Integrated OpenTelemetry for distributed tracing across all services. Mean time to resolution (MTTR) for incidents dropped from 2 hours to 15 minutes. Rolled out an AI-assisted onboarding flow using Claude that guides new users through setup — activation rate improved from 45% to 78%.",
+    "Rebuilt our search infrastructure using Elasticsearch with vector embeddings for semantic search. Search relevance scores improved by 4x. Adopted Infrastructure as Code (Terraform + Pulumi) — environment provisioning now takes 10 minutes instead of 2 days. Team completed AWS certification training.",
+    "Launched a GPT-powered document processing feature that extracts structured data from PDFs and invoices with 97% accuracy. Replaced manual data entry for 200+ enterprise customers. Migrated to a monorepo structure using Turborepo — build caching reduced CI times by 60%. Adopted Prisma ORM for type-safe database access.",
+    "Implemented a feature flag system using LaunchDarkly enabling safe progressive rollouts. Shipped 3x more features this quarter with zero rollbacks. Built an internal AI assistant using Claude that helps engineers search documentation and debug issues — average onboarding time for new hires reduced from 3 weeks to 5 days.",
+    "Completed migration from REST to GraphQL APIs using Apollo Server. Frontend data fetching is now 40% more efficient with fewer over-fetching issues. Adopted Playwright for E2E testing — test coverage went from 30% to 85%. Exploring edge computing with Cloudflare Workers for latency-sensitive endpoints.",
   ];
 
   const allCompanies = await prisma.company.findMany();
