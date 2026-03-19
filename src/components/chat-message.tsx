@@ -57,11 +57,11 @@ function UpdateConfirmCard({ toolCall }: { toolCall: ToolCall }) {
           </svg>
           <span className="text-sm font-semibold text-green-800">Update Submitted Successfully</span>
         </div>
-        {toolCall.data?.weekNumber && (
+        {"weekNumber" in (toolCall.data ?? {}) ? (
           <p className="text-xs text-green-700">
-            Week {String(toolCall.data.weekNumber)}, {String(toolCall.data.year)} — <a href="/updates" className="underline hover:no-underline">View updates</a>
+            Week {String(toolCall.data?.weekNumber)}, {String(toolCall.data?.year)} — <a href="/updates" className="underline hover:no-underline">View updates</a>
           </p>
-        )}
+        ) : null}
       </div>
     );
   }
