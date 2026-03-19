@@ -46,7 +46,7 @@ export default async function CompanyProfilePage({ params }: { params: { slug: s
       }),
   }));
 
-  const chartColors = ["#1e40af", "#10b981", "#f59e0b", "#8b5cf6"];
+  const chartColors = ["#1e40af", "#10b981", "#f59e0b", "#8b5cf6", "#ec4899", "#06b6d4", "#f97316"];
 
   return (
     <div className="space-y-6">

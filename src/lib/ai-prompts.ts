@@ -43,9 +43,11 @@ Details: ${u.details}`;
   return `Analyze these weekly company updates and rank ALL companies by quantifiable impact.
 
 Ranking criteria (in order of importance):
-1. Magnitude of metric improvements (revenue growth, customer acquisition, tech debt reduction, uptime)
-2. Novelty and effectiveness of approach
-3. Potential applicability of their strategies to other companies
+1. Support AI adoption maturity (% support handled by AI, ticket deflection rate)
+2. Customer satisfaction outcomes (NPS/CSAT, first contact resolution rate)
+3. Operational efficiency gains (support cost ratio, avg resolution time, repeat contact rate)
+4. Novelty and effectiveness of approach
+5. Potential applicability of their strategies to other companies
 
 For companies not ranked #1, provide a personalized improvement suggestion that references specific strategies used by top-performing companies. Be specific and actionable.
 

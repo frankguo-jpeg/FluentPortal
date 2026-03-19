@@ -1,19 +1,25 @@
 import { z } from "zod";
 
 export const METRIC_TEMPLATES = [
-  { key: "revenueGrowth", label: "Revenue Growth", unit: "%", description: "Month-over-month revenue change" },
-  { key: "customerAcquisition", label: "New Customers Acquired", unit: "count", description: "New customers this week" },
-  { key: "techDebtReduction", label: "Tech Debt Reduction", unit: "%", description: "Percentage of tech debt addressed" },
-  { key: "uptime", label: "Uptime", unit: "%", description: "Service availability percentage" },
+  { key: "aiSupportPercent", label: "% Support Handled by AI", unit: "%", description: "Tickets resolved by AI without human escalation" },
+  { key: "supportCostRevenue", label: "Support Cost / Revenues", unit: "%", description: "Support costs as a percentage of total revenue" },
+  { key: "npsCsat", label: "NPS/CSAT Score", unit: "score", description: "Customer satisfaction score (0-100)" },
+  { key: "firstContactResolution", label: "First Contact Resolution", unit: "%", description: "Tickets resolved on first contact" },
+  { key: "avgTimeToResolution", label: "Avg Resolution Time", unit: "hrs", description: "Average hours to resolve a ticket" },
+  { key: "repeatContactRate", label: "Repeat Contact Rate", unit: "%", description: "Percentage of follow-up or reopened tickets" },
+  { key: "ticketDeflectionRate", label: "Ticket Deflection Rate", unit: "%", description: "Tickets deflected via self-service or AI" },
 ] as const;
 
 export type MetricKey = (typeof METRIC_TEMPLATES)[number]["key"];
 
 export const metricsSchema = z.object({
-  revenueGrowth: z.number().nullable().optional(),
-  customerAcquisition: z.number().int().nullable().optional(),
-  techDebtReduction: z.number().nullable().optional(),
-  uptime: z.number().min(0).max(100).nullable().optional(),
+  aiSupportPercent: z.number().min(0).max(100).nullable().optional(),
+  supportCostRevenue: z.number().min(0).nullable().optional(),
+  npsCsat: z.number().min(0).max(100).nullable().optional(),
+  firstContactResolution: z.number().min(0).max(100).nullable().optional(),
+  avgTimeToResolution: z.number().min(0).nullable().optional(),
+  repeatContactRate: z.number().min(0).max(100).nullable().optional(),
+  ticketDeflectionRate: z.number().min(0).max(100).nullable().optional(),
 });
 
 export type Metrics = z.infer<typeof metricsSchema>;

@@ -107,10 +107,13 @@ async function main() {
 
       const detailIndex = (allCompanies.indexOf(company) + weekNum) % sampleDetails.length;
       const metrics = JSON.stringify({
-        revenueGrowth: parseFloat((Math.random() * 20 - 5).toFixed(1)),
-        customerAcquisition: Math.floor(Math.random() * 50) + 5,
-        techDebtReduction: parseFloat((Math.random() * 30).toFixed(1)),
-        uptime: parseFloat((99 + Math.random()).toFixed(2)),
+        aiSupportPercent: parseFloat((Math.random() * 70 + 10).toFixed(1)),
+        supportCostRevenue: parseFloat((Math.random() * 20 + 3).toFixed(1)),
+        npsCsat: Math.floor(Math.random() * 50 + 45),
+        firstContactResolution: parseFloat((Math.random() * 40 + 55).toFixed(1)),
+        avgTimeToResolution: parseFloat((Math.random() * 20 + 0.5).toFixed(1)),
+        repeatContactRate: parseFloat((Math.random() * 25 + 5).toFixed(1)),
+        ticketDeflectionRate: parseFloat((Math.random() * 55 + 20).toFixed(1)),
       });
 
       // Set submittedAt to the Monday of that week

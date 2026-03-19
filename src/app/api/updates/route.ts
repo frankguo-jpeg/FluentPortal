@@ -76,9 +76,18 @@ export async function POST(req: NextRequest) {
       year,
       metrics: JSON.stringify(parsed.data.metrics),
       details: parsed.data.details,
+      attachments: parsed.data.attachments?.length ? {
+        create: parsed.data.attachments.map((a) => ({
+          filename: a.filename,
+          url: a.url,
+          size: a.size,
+          mimeType: a.mimeType,
+        })),
+      } : undefined,
     },
     include: {
       company: { select: { id: true, name: true, slug: true } },
+      attachments: true,
     },
   });
 

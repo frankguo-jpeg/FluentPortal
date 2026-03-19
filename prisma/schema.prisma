@@ -9,11 +9,17 @@ datasource db {
 }
 
 model Company {
-  id        String   @id @default(cuid())
-  name      String
-  slug      String   @unique
-  logo      String?
-  createdAt DateTime @default(now())
+  id          String   @id @default(cuid())
+  name        String
+  slug        String   @unique
+  logo        String?
+  description String?
+  techStack   String?
+  teamSize    Int?
+  products    String?
+  challenges  String?
+  goals       String?
+  createdAt   DateTime @default(now())
 
   users         User[]
   weeklyUpdates WeeklyUpdate[]
@@ -44,11 +50,24 @@ model WeeklyUpdate {
   submittedAt DateTime @default(now())
   createdAt   DateTime @default(now())
 
-  company   Company    @relation(fields: [companyId], references: [id])
-  comments  Comment[]
-  reactions Reaction[]
+  company     Company      @relation(fields: [companyId], references: [id])
+  comments    Comment[]
+  reactions   Reaction[]
+  attachments Attachment[]
 
   @@unique([companyId, weekNumber, year])
+}
+
+model Attachment {
+  id        String   @id @default(cuid())
+  updateId  String
+  filename  String
+  url       String
+  size      Int
+  mimeType  String
+  createdAt DateTime @default(now())
+
+  update WeeklyUpdate @relation(fields: [updateId], references: [id], onDelete: Cascade)
 }
 
 model Comment {

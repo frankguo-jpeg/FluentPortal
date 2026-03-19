@@ -15,10 +15,13 @@ export default function EditUpdatePage() {
   const id = params.id as string;
 
   const [metrics, setMetrics] = useState<Record<string, number | null>>({
-    revenueGrowth: null,
-    customerAcquisition: null,
-    techDebtReduction: null,
-    uptime: null,
+    aiSupportPercent: null,
+    supportCostRevenue: null,
+    npsCsat: null,
+    firstContactResolution: null,
+    avgTimeToResolution: null,
+    repeatContactRate: null,
+    ticketDeflectionRate: null,
   });
   const [details, setDetails] = useState("");
   const [weekLabel, setWeekLabel] = useState("");
