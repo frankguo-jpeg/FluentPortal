@@ -51,9 +51,52 @@ export default async function CompanyProfilePage({ params }: { params: { slug: s
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-slate-900">{company.name}</h1>
-        <p className="text-slate-500 text-sm">{company.weeklyUpdates.length} updates submitted</p>
+        <div className="flex items-center gap-3 mb-1">
+          <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-blue-100 to-blue-50 flex items-center justify-center text-blue-700 font-bold text-base">
+            {company.name.charAt(0)}
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold text-slate-900">{company.name}</h1>
+            <p className="text-slate-500 text-sm">{company.weeklyUpdates.length} updates submitted{company.teamSize ? ` · ${company.teamSize} employees` : ""}</p>
+          </div>
+        </div>
       </div>
+
+      {/* Company Profile */}
+      {(company.description || company.techStack || company.products || company.challenges || company.goals) && (
+        <div className="card divide-y divide-slate-100">
+          {company.description && (
+            <div className="px-6 py-4">
+              <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-1">About</p>
+              <p className="text-sm text-slate-700 leading-relaxed">{company.description}</p>
+            </div>
+          )}
+          {company.products && (
+            <div className="px-6 py-4">
+              <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-1">Products & Services</p>
+              <p className="text-sm text-slate-700 leading-relaxed">{company.products}</p>
+            </div>
+          )}
+          {company.techStack && (
+            <div className="px-6 py-4">
+              <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-1">Tech Stack</p>
+              <p className="text-sm text-slate-700 leading-relaxed">{company.techStack}</p>
+            </div>
+          )}
+          {company.challenges && (
+            <div className="px-6 py-4">
+              <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-1">Challenges</p>
+              <p className="text-sm text-slate-700 leading-relaxed">{company.challenges}</p>
+            </div>
+          )}
+          {company.goals && (
+            <div className="px-6 py-4">
+              <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-1">Transformation Goals</p>
+              <p className="text-sm text-slate-700 leading-relaxed">{company.goals}</p>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Monthly Ranking */}
       {company.monthlyScores.length > 0 && (
