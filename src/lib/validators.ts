@@ -36,6 +36,12 @@ export const chatMessageSchema = z.object({
     role: z.enum(["user", "assistant"]),
     content: z.string().min(1).max(5000),
   })).min(1).max(50),
+  attachments: z.array(z.object({
+    filename: z.string(),
+    url: z.string(),
+    size: z.number(),
+    mimeType: z.string(),
+  })).optional(),
 });
 
 export type CreateUpdateInput = z.infer<typeof createUpdateSchema>;

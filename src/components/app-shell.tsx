@@ -2,11 +2,11 @@
 
 import { usePathname } from "next/navigation";
 import { Sidebar } from "./sidebar";
-import { ChatPanel } from "./chat-panel";
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const isLoginPage = pathname === "/login";
+  const isChatPage = pathname === "/chat";
 
   if (isLoginPage) {
     return <>{children}</>;
@@ -15,8 +15,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex min-h-screen">
       <Sidebar />
-      <main className="flex-1 p-8 overflow-y-auto h-screen">{children}</main>
-      <ChatPanel />
+      <main className={`flex-1 overflow-y-auto h-screen ${isChatPage ? "" : "p-8"}`}>{children}</main>
     </div>
   );
 }
