@@ -74,9 +74,9 @@ function UpdateConfirmCard({ toolCall }: { toolCall: ToolCall }) {
         </svg>
         <span className="text-sm font-semibold text-red-800">Submission Failed</span>
       </div>
-      {toolCall.data?.error && (
-        <p className="text-xs text-red-700 mt-1">{String(toolCall.data.error)}</p>
-      )}
+      {"error" in (toolCall.data ?? {}) ? (
+        <p className="text-xs text-red-700 mt-1">{String(toolCall.data?.error)}</p>
+      ) : null}
     </div>
   );
 }
