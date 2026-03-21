@@ -46,7 +46,10 @@ function formatContent(text: string) {
 }
 
 function UpdateConfirmCard({ toolCall }: { toolCall: ToolCall }) {
-  if (toolCall.tool !== "submit_weekly_update") return null;
+  const isUpdate = toolCall.tool === "submit_weekly_update" || toolCall.tool === "edit_weekly_update";
+  if (!isUpdate) return null;
+
+  const isEdit = toolCall.tool === "edit_weekly_update";
 
   if (toolCall.success) {
     return (
@@ -55,7 +58,9 @@ function UpdateConfirmCard({ toolCall }: { toolCall: ToolCall }) {
           <svg className="w-5 h-5 text-green-600" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
           </svg>
-          <span className="text-sm font-semibold text-green-800">Update Submitted Successfully</span>
+          <span className="text-sm font-semibold text-green-800">
+            {isEdit ? "Update Edited Successfully" : "Update Submitted Successfully"}
+          </span>
         </div>
         {"weekNumber" in (toolCall.data ?? {}) ? (
           <p className="text-xs text-green-700">
@@ -72,7 +77,9 @@ function UpdateConfirmCard({ toolCall }: { toolCall: ToolCall }) {
         <svg className="w-5 h-5 text-red-600" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 3.75h.008v.008H12v-.008Z" />
         </svg>
-        <span className="text-sm font-semibold text-red-800">Submission Failed</span>
+        <span className="text-sm font-semibold text-red-800">
+          {isEdit ? "Edit Failed" : "Submission Failed"}
+        </span>
       </div>
       {"error" in (toolCall.data ?? {}) ? (
         <p className="text-xs text-red-700 mt-1">{String(toolCall.data?.error)}</p>

@@ -5,26 +5,40 @@ import { chatMessageSchema } from "@/lib/validators";
 import { getCurrentWeek } from "@/lib/utils";
 import Anthropic from "@anthropic-ai/sdk";
 
+const metricsSchema = {
+  type: "object",
+  properties: {
+    aiSupportPercent: { type: "number", description: "% Support Handled by AI (0-100)" },
+    supportCostRevenue: { type: "number", description: "Support Cost / Revenues (%)" },
+    npsCsat: { type: "number", description: "NPS/CSAT Score (0-100)" },
+    firstContactResolution: { type: "number", description: "First Contact Resolution Rate (%)" },
+    avgTimeToResolution: { type: "number", description: "Average Time to Resolution (hours)" },
+    repeatContactRate: { type: "number", description: "Repeat Contact Rate (%)" },
+    ticketDeflectionRate: { type: "number", description: "Ticket Deflection Rate (%)" },
+  },
+};
+
 const tools: Anthropic.Tool[] = [
   {
     name: "submit_weekly_update",
-    description: "Submit a weekly update for the user's company. Use this ONLY after you have gathered all the metrics and details through conversation AND the user has confirmed they want to submit. Always show a preview first and ask for confirmation.",
+    description: "Submit a NEW weekly update for the user's company. Use this ONLY when no update exists for the current week. Always show a preview first and ask for confirmation.",
     input_schema: {
       type: "object" as const,
       properties: {
-        metrics: {
-          type: "object",
-          properties: {
-            aiSupportPercent: { type: "number", description: "% Support Handled by AI (0-100)" },
-            supportCostRevenue: { type: "number", description: "Support Cost / Revenues (%)" },
-            npsCsat: { type: "number", description: "NPS/CSAT Score (0-100)" },
-            firstContactResolution: { type: "number", description: "First Contact Resolution Rate (%)" },
-            avgTimeToResolution: { type: "number", description: "Average Time to Resolution (hours)" },
-            repeatContactRate: { type: "number", description: "Repeat Contact Rate (%)" },
-            ticketDeflectionRate: { type: "number", description: "Ticket Deflection Rate (%)" },
-          },
-        },
+        metrics: metricsSchema,
         details: { type: "string", description: "Narrative details about what happened this week" },
+      },
+      required: ["metrics", "details"],
+    },
+  },
+  {
+    name: "edit_weekly_update",
+    description: "Edit/update an EXISTING weekly update for the user's company. Use this when the user already has an update for the current week and wants to modify it. Always show a preview of the changes first and ask for confirmation.",
+    input_schema: {
+      type: "object" as const,
+      properties: {
+        metrics: metricsSchema,
+        details: { type: "string", description: "Updated narrative details" },
       },
       required: ["metrics", "details"],
     },
@@ -94,6 +108,31 @@ export async function POST(req: Request) {
 
   const { weekNumber, year } = getCurrentWeek();
 
+  // Check if user already has an update for this week
+  let existingUpdateContext = "";
+  if (session.user.companyId) {
+    const existingUpdate = await prisma.weeklyUpdate.findUnique({
+      where: {
+        companyId_weekNumber_year: {
+          companyId: session.user.companyId,
+          weekNumber,
+          year,
+        },
+      },
+    });
+    if (existingUpdate) {
+      const existingMetrics = JSON.parse(existingUpdate.metrics);
+      const metricsSummary = Object.entries(existingMetrics)
+        .filter(([, v]) => v !== null && v !== undefined)
+        .map(([k, v]) => `${k}: ${v}`)
+        .join(", ");
+      existingUpdateContext = `\n\nEXISTING UPDATE FOR THIS WEEK (Week ${weekNumber}):
+Metrics: ${metricsSummary}
+Details: ${existingUpdate.details}
+NOTE: The user already has an update this week. If they want to submit changes, use the edit_weekly_update tool instead of submit_weekly_update. Merge any new information with the existing data.`;
+    }
+  }
+
   const attachmentContext = parsed.data.attachments?.length
     ? `\n\nUSER HAS UPLOADED FILES: ${parsed.data.attachments.map((a) => a.filename).join(", ")}. These will be attached to the update if submitted.`
     : "";
@@ -115,20 +154,23 @@ ${companyContext || "No profiles available yet."}
 RECENT WEEKLY UPDATES:
 ${updateContext || "No updates available yet."}
 ${rankingContext}
+${existingUpdateContext}
 
 CAPABILITIES:
 - Answer questions about portfolio company performance, trends, strategies, and recommendations
 - Help users submit their weekly updates through guided conversation
 - Reference actual company data and be specific
 
-WEEKLY UPDATE SUBMISSION:
-When a user wants to submit their weekly update, guide them through it conversationally:
+WEEKLY UPDATE SUBMISSION & EDITING:
+When a user wants to submit or edit their weekly update, guide them through it conversationally:
 1. Ask about their week — what they worked on, what they achieved, any challenges
 2. Ask about their KPIs: % Support Handled by AI, Support Cost/Revenues, NPS/CSAT, First Contact Resolution, Avg Resolution Time, Repeat Contact Rate, Ticket Deflection Rate
 3. It's OK if they don't have all metrics — just collect what they have
 4. Show them a clear preview of the structured update with all extracted metrics
 5. Ask them to confirm before submitting
-6. Only call the submit_weekly_update tool AFTER they explicitly confirm
+6. If they ALREADY have an update this week, use edit_weekly_update to update it (merge new info with existing data)
+7. If they DON'T have an update yet, use submit_weekly_update to create a new one
+8. Only call the tool AFTER they explicitly confirm
 
 IMPORTANT BOUNDARIES:
 - You are ONLY for FluentPortal and the Agentic Games. Do NOT help with general coding, writing scripts, homework, or anything unrelated to portfolio company performance, agentic transformation, support KPIs, or weekly updates.
@@ -187,8 +229,8 @@ Be conversational, friendly, and encouraging. Keep responses concise but helpful
           });
 
           if (existing) {
-            toolResult = JSON.stringify({ success: false, error: "Already submitted an update this week. You can edit it from the Updates page." });
-            toolCallResults.push({ tool: "submit_weekly_update", success: false, data: { error: "Already submitted an update this week" } });
+            toolResult = JSON.stringify({ success: false, error: "Already submitted an update this week. Use the edit_weekly_update tool to modify it." });
+            toolCallResults.push({ tool: "submit_weekly_update", success: false, data: { error: "Already submitted an update this week. Use edit instead." } });
           } else {
             const input = toolUseBlock.input as { metrics: Record<string, number | null>; details: string };
 
@@ -229,6 +271,57 @@ Be conversational, friendly, and encouraging. Keep responses concise but helpful
         const errorMsg = err instanceof Error ? err.message : "Unknown error";
         toolResult = JSON.stringify({ success: false, error: errorMsg });
         toolCallResults.push({ tool: "submit_weekly_update", success: false, data: { error: errorMsg } });
+      }
+    } else if (toolUseBlock.name === "edit_weekly_update") {
+      try {
+        if (session.user.role !== "COMPANY_ADMIN" || !session.user.companyId) {
+          toolResult = JSON.stringify({ success: false, error: "Only company admins can edit updates" });
+          toolCallResults.push({ tool: "edit_weekly_update", success: false, data: { error: "Only company admins can edit updates" } });
+        } else {
+          const existing = await prisma.weeklyUpdate.findUnique({
+            where: {
+              companyId_weekNumber_year: {
+                companyId: session.user.companyId,
+                weekNumber,
+                year,
+              },
+            },
+          });
+
+          if (!existing) {
+            toolResult = JSON.stringify({ success: false, error: "No update found for this week. Use submit_weekly_update to create one." });
+            toolCallResults.push({ tool: "edit_weekly_update", success: false, data: { error: "No update found this week" } });
+          } else {
+            const input = toolUseBlock.input as { metrics: Record<string, number | null>; details: string };
+
+            const update = await prisma.weeklyUpdate.update({
+              where: { id: existing.id },
+              data: {
+                metrics: JSON.stringify(input.metrics),
+                details: input.details,
+              },
+              include: { company: { select: { name: true } } },
+            });
+
+            toolResult = JSON.stringify({
+              success: true,
+              action: "edited",
+              updateId: update.id,
+              company: update.company.name,
+              weekNumber,
+              year,
+            });
+            toolCallResults.push({
+              tool: "edit_weekly_update",
+              success: true,
+              data: { updateId: update.id, weekNumber, year, action: "edited" },
+            });
+          }
+        }
+      } catch (err) {
+        const errorMsg = err instanceof Error ? err.message : "Unknown error";
+        toolResult = JSON.stringify({ success: false, error: errorMsg });
+        toolCallResults.push({ tool: "edit_weekly_update", success: false, data: { error: errorMsg } });
       }
     } else {
       toolResult = JSON.stringify({ error: "Unknown tool" });
