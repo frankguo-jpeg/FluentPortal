@@ -21,7 +21,7 @@ export function UpdateCard({ update }: UpdateCardProps) {
   const metrics = JSON.parse(update.metrics);
 
   return (
-    <Link href={`/updates/${update.id}`} className="card-hover p-5 block group">
+    <Link href={`/updates/${update.id}`} className="card-hover p-6 block group">
       <div className="flex items-start justify-between mb-4">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-100 to-blue-50 flex items-center justify-center text-blue-700 font-bold text-sm">

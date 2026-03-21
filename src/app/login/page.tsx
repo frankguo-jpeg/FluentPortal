@@ -99,9 +99,11 @@ export default function LoginPage() {
             {loading ? "Signing in..." : "Sign In"}
           </button>
 
-          <p className="text-[11px] text-center mt-4" style={{ color: "rgba(255,255,255,0.2)" }}>
-            Default password: password123
-          </p>
+          {process.env.NODE_ENV === "development" && (
+            <p className="text-[11px] text-center mt-4" style={{ color: "rgba(255,255,255,0.2)" }}>
+              Default password: password123
+            </p>
+          )}
         </form>
       </div>
     </div>

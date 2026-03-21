@@ -49,7 +49,7 @@ export default async function UpdateDetailPage({ params }: { params: { id: strin
         </div>
       </div>
 
-      <div className="card p-6 mb-4">
+      <div className="card p-6 mb-6">
         <h2 className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-4">Metrics</h2>
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
           {METRIC_TEMPLATES.map((template) => {
@@ -68,13 +68,13 @@ export default async function UpdateDetailPage({ params }: { params: { id: strin
         </div>
       </div>
 
-      <div className="card p-6 mb-4">
+      <div className="card p-6 mb-6">
         <h2 className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-3">Details</h2>
         <p className="text-slate-700 leading-relaxed whitespace-pre-wrap">{update.details}</p>
       </div>
 
       {update.attachments.length > 0 && (
-        <div className="card p-6 mb-4">
+        <div className="card p-6 mb-6">
           <h2 className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-3">Attachments</h2>
           <div className="space-y-2">
             {update.attachments.map((att) => (
@@ -98,7 +98,7 @@ export default async function UpdateDetailPage({ params }: { params: { id: strin
         </div>
       )}
 
-      <div className="card p-5 mb-4">
+      <div className="card p-6 mb-6">
         <ReactionBar updateId={update.id} />
       </div>
 

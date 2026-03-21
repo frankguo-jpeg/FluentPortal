@@ -56,8 +56,8 @@ export default async function CompanyProfilePage({ params }: { params: { slug: s
             {company.name.charAt(0)}
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-slate-900">{company.name}</h1>
-            <p className="text-slate-500 text-sm">{company.weeklyUpdates.length} updates submitted{company.teamSize ? ` · ${company.teamSize} employees` : ""}</p>
+            <h1 className="page-title">{company.name}</h1>
+            <p className="page-subtitle">{company.weeklyUpdates.length} updates submitted{company.teamSize ? ` · ${company.teamSize} employees` : ""}</p>
           </div>
         </div>
       </div>
@@ -101,7 +101,7 @@ export default async function CompanyProfilePage({ params }: { params: { slug: s
       {/* Monthly Ranking */}
       {company.monthlyScores.length > 0 && (
         <div className="card p-6">
-          <h2 className="font-semibold text-slate-900 mb-3">Monthly Rankings</h2>
+          <h2 className="section-title mb-4">Monthly Rankings</h2>
           <div className="flex gap-3 overflow-x-auto">
             {company.monthlyScores.map((score) => (
               <div key={score.id} className="bg-slate-50 rounded-lg px-4 py-3 min-w-fit">
@@ -117,16 +117,17 @@ export default async function CompanyProfilePage({ params }: { params: { slug: s
       {/* Trend Charts */}
       {company.weeklyUpdates.length > 1 && (
         <div className="card p-6">
-          <h2 className="font-semibold text-slate-900 mb-4">Metric Trends</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <h2 className="section-title mb-4">Metric Trends</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
             {trendData.map((trend, i) => (
-              <TrendChart
-                key={trend.key}
-                data={trend.data}
-                label={trend.label}
-                unit={trend.unit}
-                color={chartColors[i]}
-              />
+              <div key={trend.key} className={i === trendData.length - 1 && trendData.length % 3 === 1 ? "md:col-span-2 xl:col-span-1" : ""}>
+                <TrendChart
+                  data={trend.data}
+                  label={trend.label}
+                  unit={trend.unit}
+                  color={chartColors[i]}
+                />
+              </div>
             ))}
           </div>
         </div>
@@ -134,10 +135,16 @@ export default async function CompanyProfilePage({ params }: { params: { slug: s
 
       {/* Update History */}
       <div>
-        <h2 className="font-semibold text-slate-900 mb-4">Update History</h2>
+        <h2 className="section-title mb-4">Update History</h2>
         {company.weeklyUpdates.length === 0 ? (
-          <div className="card p-12 text-center">
-            <p className="text-slate-500">No updates yet.</p>
+          <div className="card p-16 text-center">
+            <div className="w-16 h-16 rounded-2xl bg-slate-100 flex items-center justify-center mx-auto mb-4">
+              <svg className="w-8 h-8 text-slate-300" fill="none" viewBox="0 0 24 24" strokeWidth={1} stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />
+              </svg>
+            </div>
+            <h3 className="font-semibold text-slate-700 mb-1">No Updates Yet</h3>
+            <p className="text-slate-500 text-sm max-w-sm mx-auto">This company has not submitted any weekly updates yet. Updates will appear here once they start reporting their progress.</p>
           </div>
         ) : (
           <div className="grid gap-4">

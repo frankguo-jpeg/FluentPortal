@@ -1,12 +1,12 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { cn } from "@/lib/utils";
 
 const REACTION_TYPES = [
-  { type: "LIKE", label: "Like", icon: "👍" },
-  { type: "INSIGHTFUL", label: "Insightful", icon: "💡" },
-  { type: "INNOVATIVE", label: "Innovative", icon: "🚀" },
+  { type: "LIKE", label: "Like", icon: "\ud83d\udc4d" },
+  { type: "INSIGHTFUL", label: "Insightful", icon: "\ud83d\udca1" },
+  { type: "INNOVATIVE", label: "Innovative", icon: "\ud83d\ude80" },
 ] as const;
 
 interface ReactionBarProps {
@@ -16,7 +16,8 @@ interface ReactionBarProps {
 export function ReactionBar({ updateId }: ReactionBarProps) {
   const [counts, setCounts] = useState({ LIKE: 0, INSIGHTFUL: 0, INNOVATIVE: 0 });
   const [userReactions, setUserReactions] = useState<string[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [pendingTypes, setPendingTypes] = useState<Set<string>>(new Set());
+  const prevStateRef = useRef<{ counts: typeof counts; userReactions: string[] } | null>(null);
 
   useEffect(() => {
     fetch(`/api/reactions?updateId=${updateId}`)
@@ -28,25 +29,48 @@ export function ReactionBar({ updateId }: ReactionBarProps) {
   }, [updateId]);
 
   async function toggleReaction(type: string) {
-    if (loading) return;
-    setLoading(true);
+    if (pendingTypes.has(type)) return;
 
-    const res = await fetch("/api/reactions", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ updateId, type }),
-    });
-    const data = await res.json();
+    // Save previous state for rollback
+    const prevCounts = { ...counts };
+    const prevUserReactions = [...userReactions];
+    prevStateRef.current = { counts: prevCounts, userReactions: prevUserReactions };
 
-    if (data.action === "added") {
+    // Optimistic update
+    const isCurrentlyActive = userReactions.includes(type);
+    if (isCurrentlyActive) {
+      setCounts((prev) => ({ ...prev, [type]: Math.max(0, prev[type as keyof typeof prev] - 1) }));
+      setUserReactions((prev) => prev.filter((r) => r !== type));
+    } else {
       setCounts((prev) => ({ ...prev, [type]: prev[type as keyof typeof prev] + 1 }));
       setUserReactions((prev) => [...prev, type]);
-    } else {
-      setCounts((prev) => ({ ...prev, [type]: prev[type as keyof typeof prev] - 1 }));
-      setUserReactions((prev) => prev.filter((r) => r !== type));
     }
 
-    setLoading(false);
+    setPendingTypes((prev) => new Set(prev).add(type));
+
+    try {
+      const res = await fetch("/api/reactions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ updateId, type }),
+      });
+
+      if (!res.ok) {
+        // Revert on failure
+        setCounts(prevCounts);
+        setUserReactions(prevUserReactions);
+      }
+    } catch {
+      // Revert on network error
+      setCounts(prevCounts);
+      setUserReactions(prevUserReactions);
+    } finally {
+      setPendingTypes((prev) => {
+        const next = new Set(prev);
+        next.delete(type);
+        return next;
+      });
+    }
   }
 
   return (
@@ -58,9 +82,9 @@ export function ReactionBar({ updateId }: ReactionBarProps) {
           <button
             key={type}
             onClick={() => toggleReaction(type)}
-            disabled={loading}
+            disabled={pendingTypes.has(type)}
             className={cn(
-              "flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200",
+              "flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 disabled:opacity-50",
               isActive
                 ? "bg-blue-50 text-blue-800 border-2 border-blue-200 shadow-sm"
                 : "bg-slate-50 text-slate-500 border-2 border-transparent hover:bg-slate-100 hover:text-slate-700"

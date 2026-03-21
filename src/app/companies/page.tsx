@@ -53,7 +53,7 @@ export default async function CompaniesPage() {
             <Link
               key={company.id}
               href={`/companies/${company.slug}`}
-              className="card-hover p-5 group"
+              className="card-hover p-6 group"
             >
               <div className="flex items-start justify-between mb-3">
                 <div className="flex items-center gap-3">

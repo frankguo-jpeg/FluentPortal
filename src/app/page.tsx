@@ -63,17 +63,17 @@ export default async function DashboardPage() {
 
       {/* Stats Row */}
       <div className="grid grid-cols-3 gap-4">
-        <div className="card p-5">
+        <div className="card p-6">
           <p className="text-xs font-medium text-slate-400 uppercase tracking-wide">This Week</p>
           <p className="text-2xl font-bold text-slate-900 mt-1">{thisWeekUpdates}<span className="text-sm font-normal text-slate-400">/{totalCompanies}</span></p>
           <p className="text-xs text-slate-500 mt-1">updates submitted</p>
         </div>
-        <div className="card p-5">
+        <div className="card p-6">
           <p className="text-xs font-medium text-slate-400 uppercase tracking-wide">Total Updates</p>
           <p className="text-2xl font-bold text-slate-900 mt-1">{totalUpdates}</p>
           <p className="text-xs text-slate-500 mt-1">across all companies</p>
         </div>
-        <div className="card p-5">
+        <div className="card p-6">
           <p className="text-xs font-medium text-slate-400 uppercase tracking-wide">Portfolio</p>
           <p className="text-2xl font-bold text-slate-900 mt-1">{totalCompanies}</p>
           <p className="text-xs text-slate-500 mt-1">companies tracked</p>
@@ -82,7 +82,7 @@ export default async function DashboardPage() {
 
       {/* Submission Status */}
       {session.user.role === "COMPANY_ADMIN" && (
-        <div className={`card p-5 border-l-4 ${hasSubmitted ? "border-l-emerald-500 bg-emerald-50/30" : "border-l-amber-500 bg-amber-50/30"}`}>
+        <div className={`card p-6 border-l-4 ${hasSubmitted ? "border-l-emerald-500 bg-emerald-50/30" : "border-l-amber-500 bg-amber-50/30"}`}>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${hasSubmitted ? "bg-emerald-100 text-emerald-600" : "bg-amber-100 text-amber-600"}`}>
@@ -118,7 +118,7 @@ export default async function DashboardPage() {
 
       {/* AI Suggestion */}
       {suggestion && (
-        <div className="card p-5 bg-gradient-to-r from-blue-50 to-indigo-50/50 border-blue-100/50">
+        <div className="card p-6 bg-gradient-to-r from-blue-50 to-indigo-50/50 border-blue-100/50">
           <div className="flex items-start gap-3">
             <div className="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center text-blue-700 flex-shrink-0">
               <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
@@ -141,7 +141,7 @@ export default async function DashboardPage() {
         {top3.length > 0 ? (
           <div className="grid gap-3">
             {top3.map((entry, i) => (
-              <div key={entry.companyId} className={`card p-5 bg-gradient-to-r ${RANK_GRADIENTS[i]}`}>
+              <div key={entry.companyId} className={`card p-6 bg-gradient-to-r ${RANK_GRADIENTS[i]}`}>
                 <div className="flex items-start gap-4">
                   <span className="text-2xl">{RANK_MEDALS[i]}</span>
                   <div className="flex-1">
@@ -167,8 +167,14 @@ export default async function DashboardPage() {
                 <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 18.75h-9m9 0a3 3 0 0 1 3 3h-15a3 3 0 0 1 3-3m9 0v-3.375c0-.621-.503-1.125-1.125-1.125h-.871M7.5 18.75v-3.375c0-.621.504-1.125 1.125-1.125h.872m5.007 0H9.497m5.007 0a7.454 7.454 0 0 1-.982-3.172M9.497 14.25a7.454 7.454 0 0 0 .981-3.172M5.25 4.236c-.982.143-1.954.317-2.916.52A6.003 6.003 0 0 0 7.73 9.728M5.25 4.236V4.5c0 2.108.966 3.99 2.48 5.228M5.25 4.236V2.721C7.456 2.41 9.71 2.25 12 2.25c2.291 0 4.545.16 6.75.47v1.516M18.75 4.236c.982.143 1.954.317 2.916.52A6.003 6.003 0 0 1 16.27 9.728M18.75 4.236V4.5c0 2.108-.966 3.99-2.48 5.228m0 0a6.02 6.02 0 0 1-2.77.702 6.02 6.02 0 0 1-2.77-.702" />
               </svg>
             </div>
-            <p className="text-slate-500 text-sm">No rankings generated yet.</p>
-            <p className="text-slate-400 text-xs mt-1">Rankings appear after companies submit weekly updates.</p>
+            <h3 className="font-semibold text-slate-700 mb-1">No Rankings Yet</h3>
+            <p className="text-slate-500 text-sm max-w-sm mx-auto">Rankings are generated automatically after companies submit their weekly progress updates. The top 3 performers will be highlighted here.</p>
+            <Link href="/chat" className="btn-primary inline-flex items-center gap-2 mt-5">
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+              </svg>
+              Submit your first update
+            </Link>
           </div>
         )}
       </div>
