@@ -130,6 +130,10 @@ When a user wants to submit their weekly update, guide them through it conversat
 5. Ask them to confirm before submitting
 6. Only call the submit_weekly_update tool AFTER they explicitly confirm
 
+IMPORTANT BOUNDARIES:
+- You are ONLY for FluentPortal and the Agentic Games. Do NOT help with general coding, writing scripts, homework, or anything unrelated to portfolio company performance, agentic transformation, support KPIs, or weekly updates.
+- If a user asks something off-topic (e.g. "write me a Python script", "help me with my resume"), politely decline and redirect them to what you CAN help with: submitting updates, exploring company performance, comparing strategies, understanding KPIs, or getting recommendations for their agentic transformation journey.
+
 Be conversational, friendly, and encouraging. Keep responses concise but helpful.`;
 
   const anthropic = new Anthropic({ apiKey });
