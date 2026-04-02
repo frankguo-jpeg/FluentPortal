@@ -1,5 +1,8 @@
 "use client";
 
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
+
 interface ToolCall {
   tool: string;
   success: boolean;
@@ -10,39 +13,6 @@ interface ChatMessageProps {
   role: "user" | "assistant";
   content: string;
   toolCalls?: ToolCall[];
-}
-
-function formatContent(text: string) {
-  // Simple markdown-like formatting
-  const lines = text.split("\n");
-  const elements: React.ReactNode[] = [];
-
-  lines.forEach((line, i) => {
-    // Bold
-    let formatted: React.ReactNode = line;
-    const boldParts = line.split(/\*\*(.*?)\*\*/g);
-    if (boldParts.length > 1) {
-      formatted = boldParts.map((part, j) =>
-        j % 2 === 1 ? <strong key={j}>{part}</strong> : part
-      );
-    }
-
-    // Bullet points
-    if (line.match(/^[-•]\s/)) {
-      elements.push(
-        <div key={i} className="flex gap-2 ml-1">
-          <span className="text-slate-400 mt-0.5">•</span>
-          <span>{typeof formatted === "string" ? formatted.replace(/^[-•]\s/, "") : formatted}</span>
-        </div>
-      );
-    } else if (line.trim() === "") {
-      elements.push(<div key={i} className="h-2" />);
-    } else {
-      elements.push(<div key={i}>{formatted}</div>);
-    }
-  });
-
-  return elements;
 }
 
 function UpdateConfirmCard({ toolCall }: { toolCall: ToolCall }) {
@@ -108,7 +78,54 @@ export function ChatMessage({ role, content, toolCalls }: ChatMessageProps) {
       </div>
       <div className="max-w-[720px]">
         <div className="bg-white border border-slate-200 rounded-2xl rounded-bl-sm px-5 py-3 text-sm text-slate-800 leading-relaxed shadow-sm">
-          {formatContent(content)}
+          {content ? (
+            <ReactMarkdown
+              remarkPlugins={[remarkGfm]}
+              components={{
+                h1: ({ children }) => <h1 className="text-lg font-bold mt-3 mb-2 first:mt-0">{children}</h1>,
+                h2: ({ children }) => <h2 className="text-base font-bold mt-3 mb-1.5 first:mt-0">{children}</h2>,
+                h3: ({ children }) => <h3 className="text-sm font-bold mt-2 mb-1 first:mt-0">{children}</h3>,
+                p: ({ children }) => <p className="mb-2 last:mb-0">{children}</p>,
+                ul: ({ children }) => <ul className="list-disc pl-5 mb-2 space-y-0.5">{children}</ul>,
+                ol: ({ children }) => <ol className="list-decimal pl-5 mb-2 space-y-0.5">{children}</ol>,
+                li: ({ children }) => <li className="text-sm">{children}</li>,
+                strong: ({ children }) => <strong className="font-semibold">{children}</strong>,
+                em: ({ children }) => <em className="italic">{children}</em>,
+                a: ({ href, children }) => (
+                  <a href={href} className="text-blue-600 underline hover:no-underline" target="_blank" rel="noopener noreferrer">
+                    {children}
+                  </a>
+                ),
+                code: ({ className, children }) => {
+                  const isInline = !className;
+                  if (isInline) {
+                    return <code className="bg-slate-100 text-slate-800 px-1.5 py-0.5 rounded text-xs font-mono">{children}</code>;
+                  }
+                  return (
+                    <code className="block bg-slate-900 text-slate-100 p-3 rounded-lg text-xs font-mono overflow-x-auto my-2">
+                      {children}
+                    </code>
+                  );
+                },
+                pre: ({ children }) => <pre className="my-2">{children}</pre>,
+                blockquote: ({ children }) => (
+                  <blockquote className="border-l-3 border-blue-300 pl-3 my-2 text-slate-600 italic">{children}</blockquote>
+                ),
+                table: ({ children }) => (
+                  <div className="overflow-x-auto my-2">
+                    <table className="min-w-full text-xs border-collapse">{children}</table>
+                  </div>
+                ),
+                th: ({ children }) => <th className="border border-slate-300 bg-slate-50 px-2 py-1 text-left font-semibold">{children}</th>,
+                td: ({ children }) => <td className="border border-slate-300 px-2 py-1">{children}</td>,
+                hr: () => <hr className="my-3 border-slate-200" />,
+              }}
+            >
+              {content}
+            </ReactMarkdown>
+          ) : (
+            <span className="inline-block w-1.5 h-4 bg-blue-500 animate-pulse rounded-sm" />
+          )}
         </div>
         {toolCalls?.map((tc, i) => (
           <UpdateConfirmCard key={i} toolCall={tc} />

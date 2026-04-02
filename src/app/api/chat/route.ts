@@ -45,6 +45,106 @@ const tools: Anthropic.Tool[] = [
   },
 ];
 
+async function executeToolCall(
+  toolName: string,
+  toolInput: unknown,
+  session: { user: { role: string; companyId?: string | null; name: string } },
+  weekNumber: number,
+  year: number,
+  attachments?: Array<{ filename: string; url: string; size: number; mimeType: string }>
+): Promise<{ result: string; toolCallResult: { tool: string; success: boolean; data?: Record<string, unknown> } }> {
+  if (toolName === "submit_weekly_update") {
+    try {
+      if (session.user.role !== "COMPANY_ADMIN" || !session.user.companyId) {
+        return {
+          result: JSON.stringify({ success: false, error: "Only company admins can submit updates" }),
+          toolCallResult: { tool: "submit_weekly_update", success: false, data: { error: "Only company admins can submit updates" } },
+        };
+      }
+
+      const existing = await prisma.weeklyUpdate.findUnique({
+        where: { companyId_weekNumber_year: { companyId: session.user.companyId, weekNumber, year } },
+      });
+
+      if (existing) {
+        return {
+          result: JSON.stringify({ success: false, error: "Already submitted an update this week. Use the edit_weekly_update tool to modify it." }),
+          toolCallResult: { tool: "submit_weekly_update", success: false, data: { error: "Already submitted an update this week. Use edit instead." } },
+        };
+      }
+
+      const input = toolInput as { metrics: Record<string, number | null>; details: string };
+      const update = await prisma.weeklyUpdate.create({
+        data: {
+          companyId: session.user.companyId,
+          weekNumber,
+          year,
+          metrics: JSON.stringify(input.metrics),
+          details: input.details,
+          attachments: attachments?.length ? {
+            create: attachments.map((a) => ({ filename: a.filename, url: a.url, size: a.size, mimeType: a.mimeType })),
+          } : undefined,
+        },
+        include: { company: { select: { name: true } } },
+      });
+
+      return {
+        result: JSON.stringify({ success: true, updateId: update.id, company: update.company.name, weekNumber, year }),
+        toolCallResult: { tool: "submit_weekly_update", success: true, data: { updateId: update.id, weekNumber, year } },
+      };
+    } catch (err) {
+      const errorMsg = err instanceof Error ? err.message : "Unknown error";
+      return {
+        result: JSON.stringify({ success: false, error: errorMsg }),
+        toolCallResult: { tool: "submit_weekly_update", success: false, data: { error: errorMsg } },
+      };
+    }
+  } else if (toolName === "edit_weekly_update") {
+    try {
+      if (session.user.role !== "COMPANY_ADMIN" || !session.user.companyId) {
+        return {
+          result: JSON.stringify({ success: false, error: "Only company admins can edit updates" }),
+          toolCallResult: { tool: "edit_weekly_update", success: false, data: { error: "Only company admins can edit updates" } },
+        };
+      }
+
+      const existing = await prisma.weeklyUpdate.findUnique({
+        where: { companyId_weekNumber_year: { companyId: session.user.companyId, weekNumber, year } },
+      });
+
+      if (!existing) {
+        return {
+          result: JSON.stringify({ success: false, error: "No update found for this week. Use submit_weekly_update to create one." }),
+          toolCallResult: { tool: "edit_weekly_update", success: false, data: { error: "No update found this week" } },
+        };
+      }
+
+      const input = toolInput as { metrics: Record<string, number | null>; details: string };
+      const update = await prisma.weeklyUpdate.update({
+        where: { id: existing.id },
+        data: { metrics: JSON.stringify(input.metrics), details: input.details },
+        include: { company: { select: { name: true } } },
+      });
+
+      return {
+        result: JSON.stringify({ success: true, action: "edited", updateId: update.id, company: update.company.name, weekNumber, year }),
+        toolCallResult: { tool: "edit_weekly_update", success: true, data: { updateId: update.id, weekNumber, year, action: "edited" } },
+      };
+    } catch (err) {
+      const errorMsg = err instanceof Error ? err.message : "Unknown error";
+      return {
+        result: JSON.stringify({ success: false, error: errorMsg }),
+        toolCallResult: { tool: "edit_weekly_update", success: false, data: { error: errorMsg } },
+      };
+    }
+  }
+
+  return {
+    result: JSON.stringify({ error: "Unknown tool" }),
+    toolCallResult: { tool: toolName, success: false, data: { error: "Unknown tool" } },
+  };
+}
+
 export async function POST(req: Request) {
   const session = await getSession();
   if (!session) {
@@ -62,7 +162,6 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Invalid request" }, { status: 400 });
   }
 
-  // Build context from the database
   const [companies, recentUpdates, latestRanking, userCompany] = await Promise.all([
     prisma.company.findMany({
       select: { name: true, description: true, techStack: true, teamSize: true, products: true, challenges: true, goals: true },
@@ -72,9 +171,7 @@ export async function POST(req: Request) {
       orderBy: { submittedAt: "desc" },
       take: 60,
     }),
-    prisma.aIRanking.findFirst({
-      orderBy: { generatedAt: "desc" },
-    }),
+    prisma.aIRanking.findFirst({ orderBy: { generatedAt: "desc" } }),
     session.user.companyId
       ? prisma.company.findUnique({ where: { id: session.user.companyId }, select: { name: true } })
       : null,
@@ -88,10 +185,7 @@ export async function POST(req: Request) {
   const updateContext = recentUpdates
     .map((u) => {
       const metrics = JSON.parse(u.metrics);
-      const metricSummary = Object.entries(metrics)
-        .filter(([, v]) => v !== null)
-        .map(([k, v]) => `${k}: ${v}`)
-        .join(", ");
+      const metricSummary = Object.entries(metrics).filter(([, v]) => v !== null).map(([k, v]) => `${k}: ${v}`).join(", ");
       return `${u.company.name} (Week ${u.weekNumber}): ${metricSummary} | ${u.details.substring(0, 200)}`;
     })
     .join("\n");
@@ -108,17 +202,10 @@ export async function POST(req: Request) {
 
   const { weekNumber, year } = getCurrentWeek();
 
-  // Check if user already has an update for this week
   let existingUpdateContext = "";
   if (session.user.companyId) {
     const existingUpdate = await prisma.weeklyUpdate.findUnique({
-      where: {
-        companyId_weekNumber_year: {
-          companyId: session.user.companyId,
-          weekNumber,
-          year,
-        },
-      },
+      where: { companyId_weekNumber_year: { companyId: session.user.companyId, weekNumber, year } },
     });
     if (existingUpdate) {
       const existingMetrics = JSON.parse(existingUpdate.metrics);
@@ -126,10 +213,7 @@ export async function POST(req: Request) {
         .filter(([, v]) => v !== null && v !== undefined)
         .map(([k, v]) => `${k}: ${v}`)
         .join(", ");
-      existingUpdateContext = `\n\nEXISTING UPDATE FOR THIS WEEK (Week ${weekNumber}):
-Metrics: ${metricsSummary}
-Details: ${existingUpdate.details}
-NOTE: The user already has an update this week. If they want to submit changes, use the edit_weekly_update tool instead of submit_weekly_update. Merge any new information with the existing data.`;
+      existingUpdateContext = `\n\nEXISTING UPDATE FOR THIS WEEK (Week ${weekNumber}):\nMetrics: ${metricsSummary}\nDetails: ${existingUpdate.details}\nNOTE: The user already has an update this week. If they want to submit changes, use the edit_weekly_update tool instead of submit_weekly_update. Merge any new information with the existing data.`;
     }
   }
 
@@ -179,16 +263,13 @@ IMPORTANT BOUNDARIES:
 Be conversational, friendly, and encouraging. Keep responses concise but helpful.`;
 
   const anthropic = new Anthropic({ apiKey });
-  const toolCallResults: Array<{ tool: string; success: boolean; data?: Record<string, unknown> }> = [];
-
-  // Build messages for Claude
   const claudeMessages: Anthropic.MessageParam[] = parsed.data.messages.map((m) => ({
     role: m.role as "user" | "assistant",
     content: m.content,
   }));
 
-  // Tool use loop
-  let response = await anthropic.messages.create({
+  // First, do a non-streaming call to check if tool use is needed
+  const initialResponse = await anthropic.messages.create({
     model: "claude-sonnet-4-20250514",
     max_tokens: 1024,
     system: systemPrompt,
@@ -197,169 +278,123 @@ Be conversational, friendly, and encouraging. Keep responses concise but helpful
     tool_choice: { type: "auto" },
   });
 
-  // Handle tool calls (max 3 iterations to prevent infinite loops)
-  let iterations = 0;
-  while (response.stop_reason === "tool_use" && iterations < 3) {
-    iterations++;
+  // If tool use is needed, handle it non-streaming, then stream the final response
+  const toolCallResults: Array<{ tool: string; success: boolean; data?: Record<string, unknown> }> = [];
+  let finalMessages = claudeMessages;
+  let needsStreaming = true;
 
-    const toolUseBlock = response.content.find(
-      (block): block is Anthropic.ToolUseBlock => block.type === "tool_use"
-    );
+  if (initialResponse.stop_reason === "tool_use") {
+    // Handle tool use loop (non-streaming)
+    let response = initialResponse;
+    let iterations = 0;
+    let currentMessages = [...claudeMessages];
 
-    if (!toolUseBlock) break;
+    while (response.stop_reason === "tool_use" && iterations < 3) {
+      iterations++;
+      const toolUseBlock = response.content.find(
+        (block): block is Anthropic.ToolUseBlock => block.type === "tool_use"
+      );
+      if (!toolUseBlock) break;
 
-    let toolResult: string;
+      const { result, toolCallResult } = await executeToolCall(
+        toolUseBlock.name,
+        toolUseBlock.input,
+        session,
+        weekNumber,
+        year,
+        parsed.data.attachments
+      );
+      toolCallResults.push(toolCallResult);
 
-    if (toolUseBlock.name === "submit_weekly_update") {
-      // Execute the update submission
-      try {
-        if (session.user.role !== "COMPANY_ADMIN" || !session.user.companyId) {
-          toolResult = JSON.stringify({ success: false, error: "Only company admins can submit updates" });
-          toolCallResults.push({ tool: "submit_weekly_update", success: false, data: { error: "Only company admins can submit updates" } });
-        } else {
-          // Check for existing submission
-          const existing = await prisma.weeklyUpdate.findUnique({
-            where: {
-              companyId_weekNumber_year: {
-                companyId: session.user.companyId,
-                weekNumber,
-                year,
-              },
-            },
-          });
+      currentMessages = [
+        ...currentMessages,
+        { role: "assistant" as const, content: response.content },
+        {
+          role: "user" as const,
+          content: [{ type: "tool_result" as const, tool_use_id: toolUseBlock.id, content: result }],
+        },
+      ];
 
-          if (existing) {
-            toolResult = JSON.stringify({ success: false, error: "Already submitted an update this week. Use the edit_weekly_update tool to modify it." });
-            toolCallResults.push({ tool: "submit_weekly_update", success: false, data: { error: "Already submitted an update this week. Use edit instead." } });
-          } else {
-            const input = toolUseBlock.input as { metrics: Record<string, number | null>; details: string };
-
-            const update = await prisma.weeklyUpdate.create({
-              data: {
-                companyId: session.user.companyId,
-                weekNumber,
-                year,
-                metrics: JSON.stringify(input.metrics),
-                details: input.details,
-                attachments: parsed.data.attachments?.length ? {
-                  create: parsed.data.attachments.map((a) => ({
-                    filename: a.filename,
-                    url: a.url,
-                    size: a.size,
-                    mimeType: a.mimeType,
-                  })),
-                } : undefined,
-              },
-              include: { company: { select: { name: true } } },
-            });
-
-            toolResult = JSON.stringify({
-              success: true,
-              updateId: update.id,
-              company: update.company.name,
-              weekNumber,
-              year,
-            });
-            toolCallResults.push({
-              tool: "submit_weekly_update",
-              success: true,
-              data: { updateId: update.id, weekNumber, year },
-            });
-          }
-        }
-      } catch (err) {
-        const errorMsg = err instanceof Error ? err.message : "Unknown error";
-        toolResult = JSON.stringify({ success: false, error: errorMsg });
-        toolCallResults.push({ tool: "submit_weekly_update", success: false, data: { error: errorMsg } });
-      }
-    } else if (toolUseBlock.name === "edit_weekly_update") {
-      try {
-        if (session.user.role !== "COMPANY_ADMIN" || !session.user.companyId) {
-          toolResult = JSON.stringify({ success: false, error: "Only company admins can edit updates" });
-          toolCallResults.push({ tool: "edit_weekly_update", success: false, data: { error: "Only company admins can edit updates" } });
-        } else {
-          const existing = await prisma.weeklyUpdate.findUnique({
-            where: {
-              companyId_weekNumber_year: {
-                companyId: session.user.companyId,
-                weekNumber,
-                year,
-              },
-            },
-          });
-
-          if (!existing) {
-            toolResult = JSON.stringify({ success: false, error: "No update found for this week. Use submit_weekly_update to create one." });
-            toolCallResults.push({ tool: "edit_weekly_update", success: false, data: { error: "No update found this week" } });
-          } else {
-            const input = toolUseBlock.input as { metrics: Record<string, number | null>; details: string };
-
-            const update = await prisma.weeklyUpdate.update({
-              where: { id: existing.id },
-              data: {
-                metrics: JSON.stringify(input.metrics),
-                details: input.details,
-              },
-              include: { company: { select: { name: true } } },
-            });
-
-            toolResult = JSON.stringify({
-              success: true,
-              action: "edited",
-              updateId: update.id,
-              company: update.company.name,
-              weekNumber,
-              year,
-            });
-            toolCallResults.push({
-              tool: "edit_weekly_update",
-              success: true,
-              data: { updateId: update.id, weekNumber, year, action: "edited" },
-            });
-          }
-        }
-      } catch (err) {
-        const errorMsg = err instanceof Error ? err.message : "Unknown error";
-        toolResult = JSON.stringify({ success: false, error: errorMsg });
-        toolCallResults.push({ tool: "edit_weekly_update", success: false, data: { error: errorMsg } });
-      }
-    } else {
-      toolResult = JSON.stringify({ error: "Unknown tool" });
+      response = await anthropic.messages.create({
+        model: "claude-sonnet-4-20250514",
+        max_tokens: 1024,
+        system: systemPrompt,
+        messages: currentMessages,
+        tools,
+        tool_choice: { type: "auto" },
+      });
     }
 
-    // Continue conversation with tool result
-    response = await anthropic.messages.create({
-      model: "claude-sonnet-4-20250514",
-      max_tokens: 1024,
-      system: systemPrompt,
-      messages: [
-        ...claudeMessages,
-        { role: "assistant", content: response.content },
-        {
-          role: "user",
-          content: [
-            {
-              type: "tool_result",
-              tool_use_id: toolUseBlock.id,
-              content: toolResult,
-            },
-          ],
-        },
-      ],
-      tools,
-      tool_choice: { type: "auto" },
-    });
+    // If the final response after tool use is just text, stream it
+    if (response.stop_reason === "end_turn") {
+      finalMessages = currentMessages;
+    } else {
+      // Fallback: return non-streaming
+      const textBlock = response.content.find(
+        (block): block is Anthropic.TextBlock => block.type === "text"
+      );
+      needsStreaming = false;
+      return NextResponse.json({
+        role: "assistant",
+        content: textBlock?.text || "",
+        toolCalls: toolCallResults.length > 0 ? toolCallResults : undefined,
+      });
+    }
+  } else if (initialResponse.stop_reason === "end_turn") {
+    // No tool use, but we already have the full response from the non-streaming call
+    // Stream from scratch instead
+    finalMessages = claudeMessages;
   }
 
-  // Extract final text response
-  const textBlock = response.content.find(
-    (block): block is Anthropic.TextBlock => block.type === "text"
-  );
-  const text = textBlock?.text || "";
+  if (!needsStreaming) {
+    return NextResponse.json({ role: "assistant", content: "", toolCalls: toolCallResults });
+  }
 
-  return NextResponse.json({
-    role: "assistant",
-    content: text,
-    toolCalls: toolCallResults.length > 0 ? toolCallResults : undefined,
+  // Stream the final response
+  const encoder = new TextEncoder();
+  const stream = new ReadableStream({
+    async start(controller) {
+      try {
+        // Send tool call results first if any
+        if (toolCallResults.length > 0) {
+          for (const tc of toolCallResults) {
+            controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: "tool_result", ...tc })}\n\n`));
+          }
+        }
+
+        const streamResponse = anthropic.messages.stream({
+          model: "claude-sonnet-4-20250514",
+          max_tokens: 1024,
+          system: systemPrompt,
+          messages: finalMessages,
+          tools,
+          tool_choice: { type: "auto" },
+        });
+
+        for await (const event of streamResponse) {
+          if (event.type === "content_block_delta") {
+            const delta = event.delta;
+            if ("text" in delta && delta.text) {
+              controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: "text", content: delta.text })}\n\n`));
+            }
+          }
+        }
+
+        controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: "done" })}\n\n`));
+        controller.close();
+      } catch (err) {
+        const errorMsg = err instanceof Error ? err.message : "Stream error";
+        controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: "error", error: errorMsg })}\n\n`));
+        controller.close();
+      }
+    },
+  });
+
+  return new Response(stream, {
+    headers: {
+      "Content-Type": "text/event-stream",
+      "Cache-Control": "no-cache",
+      Connection: "keep-alive",
+    },
   });
 }

@@ -28,14 +28,15 @@ interface Message {
 export default function ChatPage() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [isStreaming, setIsStreaming] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages, isLoading]);
+  }, [messages, isLoading, isStreaming]);
 
   const sendMessage = useCallback(async (content: string, attachments: UploadedFile[]) => {
-    if (isLoading) return;
+    if (isLoading || isStreaming) return;
 
     const userMessage: Message = {
       id: Date.now().toString(),
@@ -57,7 +58,90 @@ export default function ChatPage() {
         }),
       });
 
-      if (res.ok) {
+      if (!res.ok) {
+        setMessages((prev) => [
+          ...prev,
+          { id: (Date.now() + 1).toString(), role: "assistant", content: "Sorry, I encountered an error. Please try again." },
+        ]);
+        setIsLoading(false);
+        return;
+      }
+
+      const contentType = res.headers.get("content-type") || "";
+
+      if (contentType.includes("text/event-stream")) {
+        // Streaming response
+        setIsLoading(false);
+        setIsStreaming(true);
+
+        const assistantId = (Date.now() + 1).toString();
+        const collectedToolCalls: ToolCall[] = [];
+
+        // Add empty assistant message
+        setMessages((prev) => [
+          ...prev,
+          { id: assistantId, role: "assistant", content: "", toolCalls: undefined },
+        ]);
+
+        const reader = res.body!.getReader();
+        const decoder = new TextDecoder();
+        let buffer = "";
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split("\n");
+          buffer = lines.pop() || "";
+
+          for (const line of lines) {
+            if (!line.startsWith("data: ")) continue;
+            const jsonStr = line.slice(6).trim();
+            if (!jsonStr) continue;
+
+            try {
+              const event = JSON.parse(jsonStr);
+
+              if (event.type === "text") {
+                setMessages((prev) =>
+                  prev.map((m) =>
+                    m.id === assistantId
+                      ? { ...m, content: m.content + event.content }
+                      : m
+                  )
+                );
+              } else if (event.type === "tool_result") {
+                collectedToolCalls.push({
+                  tool: event.tool,
+                  success: event.success,
+                  data: event.data,
+                });
+                setMessages((prev) =>
+                  prev.map((m) =>
+                    m.id === assistantId
+                      ? { ...m, toolCalls: [...collectedToolCalls] }
+                      : m
+                  )
+                );
+              } else if (event.type === "error") {
+                setMessages((prev) =>
+                  prev.map((m) =>
+                    m.id === assistantId
+                      ? { ...m, content: m.content || "Sorry, an error occurred." }
+                      : m
+                  )
+                );
+              }
+            } catch {
+              // Skip malformed JSON
+            }
+          }
+        }
+
+        setIsStreaming(false);
+      } else {
+        // Non-streaming JSON response (fallback for tool-use-only paths)
         const data = await res.json();
         setMessages((prev) => [
           ...prev,
@@ -68,29 +152,17 @@ export default function ChatPage() {
             toolCalls: data.toolCalls,
           },
         ]);
-      } else {
-        setMessages((prev) => [
-          ...prev,
-          {
-            id: (Date.now() + 1).toString(),
-            role: "assistant",
-            content: "Sorry, I encountered an error. Please try again.",
-          },
-        ]);
+        setIsLoading(false);
       }
     } catch {
       setMessages((prev) => [
         ...prev,
-        {
-          id: (Date.now() + 1).toString(),
-          role: "assistant",
-          content: "Network error. Please check your connection and try again.",
-        },
+        { id: (Date.now() + 1).toString(), role: "assistant", content: "Network error. Please check your connection and try again." },
       ]);
+      setIsLoading(false);
+      setIsStreaming(false);
     }
-
-    setIsLoading(false);
-  }, [messages, isLoading]);
+  }, [messages, isLoading, isStreaming]);
 
   function handlePromptSelect(prompt: string) {
     sendMessage(prompt, []);
@@ -141,7 +213,7 @@ export default function ChatPage() {
 
       {/* Input */}
       <div className="flex-shrink-0 max-w-3xl mx-auto w-full">
-        <ChatInput onSend={sendMessage} disabled={isLoading} />
+        <ChatInput onSend={sendMessage} disabled={isLoading || isStreaming} />
       </div>
     </div>
   );
